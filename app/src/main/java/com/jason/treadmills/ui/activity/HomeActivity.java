@@ -4,19 +4,33 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.jason.treadmills.R;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import butterknife.OnClick;
+
 
 public class HomeActivity extends ActionBarActivity {
+
+    @InjectView(R.id.button) ImageButton btn1;
+    @InjectView(R.id.button2) ImageButton btn2;
+    @InjectView(R.id.button3) ImageButton btn3;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-
+        ButterKnife.inject(this);
     }
 
+    @OnClick(R.id.button) void showToast(){
+        Toast.makeText(this, "showToast ", Toast.LENGTH_SHORT).show();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -39,4 +53,5 @@ public class HomeActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }

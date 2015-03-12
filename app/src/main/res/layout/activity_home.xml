@@ -7,26 +7,80 @@
 
     <com.jason.treadmills.ui.view.ScrollMenuView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New Button1"
+        android:layout_height="match_parent"
+        android:id="@+id/view">
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="10dp"
+            android:background="@color/background_floating_material_dark"
+            android:text="New 1"
+            android:src="@drawable/abc_ic_menu_share_mtrl_alpha"
             android:id="@+id/button"
              />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New Button2"
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="10dp"
+            android:background="@color/material_blue_grey_800"
+            android:text="New 2"
+            android:src="@drawable/abc_ic_ab_back_mtrl_am_alpha"
             android:id="@+id/button2"
              />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New Button3"
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="10dp"
+            android:text="New 3"
+            android:background="@color/ripple_material_light"
+            android:src="@drawable/abc_ic_commit_search_api_mtrl_alpha"
             android:id="@+id/button3"
-             />
+            android:contentDescription="back" />
+
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="10dp"
+            android:text="New 3"
+            android:background="@color/ripple_material_light"
+            android:src="@drawable/abc_ic_ab_back_mtrl_am_alpha"
+            android:contentDescription="back" />
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="10dp"
+            android:text="New 3"
+            android:background="@color/ripple_material_light"
+            android:src="@drawable/abc_ic_clear_mtrl_alpha"
+            android:contentDescription="back" />
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="10dp"
+            android:text="New 3"
+            android:background="@color/ripple_material_light"
+            android:src="@drawable/abc_ic_go_search_api_mtrl_alpha"
+            android:contentDescription="back" />
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="10dp"
+            android:text="New 3"
+            android:background="@color/ripple_material_light"
+            android:src="@drawable/abc_ic_menu_copy_mtrl_am_alpha"
+            android:contentDescription="back" />
+        <ImageButton
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_margin="10dp"
+            android:text="New 3"
+            android:background="@color/ripple_material_light"
+            android:src="@drawable/abc_ic_menu_moreoverflow_mtrl_alpha"
+            android:contentDescription="back" />
     </com.jason.treadmills.ui.view.ScrollMenuView>
+
+
+
 </RelativeLayout>
