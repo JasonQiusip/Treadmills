@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -16,8 +17,11 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.OverScroller;
 
+import com.jason.treadmills.utils.Logger;
+
 public class ScrollMenuView extends ViewGroup{
 
+    private int mMaximumFlingVelocity;
     private int mMinFlingVelocity;
     private ViewConfiguration vc;
     private int desireWidth;
@@ -29,6 +33,25 @@ public class ScrollMenuView extends ViewGroup{
     private int mTouchSlop;
     private boolean mIsScrolling;
     private GestureDetectorCompat mGestureDetector;
+    // Edge effect / overscroll tracking objects.
+    private EdgeEffectCompat mEdgeEffectTop;
+    private EdgeEffectCompat mEdgeEffectBottom;
+    private EdgeEffectCompat mEdgeEffectLeft;
+    private EdgeEffectCompat mEdgeEffectRight;
+
+    private boolean mEdgeEffectTopActive;
+    private boolean mEdgeEffectBottomActive;
+    private boolean mEdgeEffectLeftActive;
+    private boolean mEdgeEffectRightActive;
+    private int childWidth;
+    private float startY;
+    private int mActivePointerId;
+    private int mTouchSlopSquare;
+    private float mLastFocusX;
+    private float mLastFocusY;
+    private float focusX;
+    private float focusY;
+
 
     public ScrollMenuView(Context context) {
         super(context);
@@ -45,7 +68,13 @@ public class ScrollMenuView extends ViewGroup{
         vc = ViewConfiguration.get(context);
         mTouchSlop = vc.getScaledTouchSlop();
         mMinFlingVelocity = vc.getScaledMinimumFlingVelocity();
-        mGestureDetector = new GestureDetectorCompat(context, mOnGestureListener);
+        mMaximumFlingVelocity = vc.getScaledMaximumFlingVelocity();
+//        mGestureDetector = new GestureDetectorCompat(context, mOnGestureListener);
+        mEdgeEffectLeft = new EdgeEffectCompat(context);
+        mEdgeEffectTop = new EdgeEffectCompat(context);
+        mEdgeEffectRight = new EdgeEffectCompat(context);
+        mEdgeEffectBottom = new EdgeEffectCompat(context);
+        mTouchSlopSquare = mTouchSlop * mTouchSlop;
     }
 
     @Override
@@ -102,9 +131,8 @@ public class ScrollMenuView extends ViewGroup{
     }
 
     @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        Log.e("moveBy", "onInterceptTouchEvent: ");
-        final int action = MotionEventCompat.getActionMasked(ev);
+    public boolean onInterceptTouchEvent(MotionEvent event) {
+        final int action = MotionEventCompat.getActionMasked(event);
 
         // Always handle the case of the touch gesture being complete.
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
@@ -112,21 +140,17 @@ public class ScrollMenuView extends ViewGroup{
             mIsScrolling = false;
             return false; // Do not intercept touch event, let the child handle it
         }
-
+        calFocusXY(event, action);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                Log.e("moveBy", "ACTION_DOWN: " + mTouchSlop);
-                initStartPoint(ev);
+                startX = mLastFocusX = focusX;
+                startY = mLastFocusY = focusY;
                 break;
             case MotionEvent.ACTION_MOVE: {
                 if (mIsScrolling) {
-                    // We're currently scrolling, so yes, intercept the
-                    // touch event!
                     return true;
                 }
-
-                final int xDiff = calculateDistanceX(ev);
-
+                final int xDiff = calculateDistanceX(event);
                 if (Math.abs(xDiff) > mTouchSlop) {
                     // Start scrolling!
                     mIsScrolling = true;
@@ -145,46 +169,70 @@ public class ScrollMenuView extends ViewGroup{
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return mGestureDetector.onTouchEvent(event) || super.onTouchEvent(event);
 
+        checkVelocityTracker();
+        velocityTracker.addMovement(event);
+        int action = event.getAction();
+
+        calFocusXY(event, action);
+
+        switch(action) {
+            case MotionEvent.ACTION_DOWN:
+                startX = mLastFocusX = focusX;
+                startY = mLastFocusY = focusY;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                final int deltaX = (int) (focusX - mLastFocusX);
+                final int deltaY = (int) (focusY - mLastFocusY);
+                int distance = (deltaX * deltaX) + (deltaY * deltaY);
+                if (distance > mTouchSlopSquare) {
+                    mLastFocusX = focusX;
+                    mLastFocusY = focusY;
+                    moveBy(-deltaX, 0);
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                velocityTracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
+                final float velocityY = velocityTracker.getYVelocity(mActivePointerId);
+                final float velocityX = velocityTracker.getXVelocity(mActivePointerId);
+                fling(-velocityX, -velocityY);
+
+                break;
+        }
+
+        return true;
     }
 
-//    private void checkVelocityTracker() {
-//        if (velocityTracker == null) {
-//            velocityTracker = VelocityTracker.obtain();
-//        } else {
-//            velocityTracker.clear();
-//        }
-//    }
+    private void calFocusXY(MotionEvent event, int action) {
+        final boolean pointerUp =
+                (action & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_POINTER_UP;
+        final int skipIndex = pointerUp ? event.getActionIndex() : -1;
 
-    private final GestureDetector.SimpleOnGestureListener mOnGestureListener
-            = new GestureDetector.SimpleOnGestureListener(){
-        @Override
-        public boolean onDown(MotionEvent e) {
-            mScroller.forceFinished(true);
-            initStartPoint(e);
-            ViewCompat.postInvalidateOnAnimation(ScrollMenuView.this);
-            return true;
+        // Determine focal point
+        float sumX = 0, sumY = 0;
+        final int count = event.getPointerCount();
+        for (int i = 0; i < count; i++) {
+            if (skipIndex == i) continue;
+            sumX += event.getX(i);
+            sumY += event.getY(i);
         }
+        final int div = pointerUp ? count - 1 : count;
+        focusX = sumX / div;
+        focusY = sumY / div;
+    }
 
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            Log.e("onScroll ", "distanceX:  "+ distanceX);
-            moveBy((int)distanceX, 0);
-            return true;
+    private void checkVelocityTracker() {
+        if (velocityTracker == null) {
+            velocityTracker = VelocityTracker.obtain();
+        } else {
+            velocityTracker.clear();
         }
+    }
 
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            fling((int) -velocityX, (int) -velocityY);
-            return true;
-        }
-    };
-
-    private void fling(int velocityX, int velocityY) {
+    private void fling(float velocityX, float velocityY) {
         mScroller.forceFinished(true);
         int mScrollX = getScrollX();
-        Log.e("fling  ", "" + mScrollX);
+        Logger.showErrorLog("fling  ", "" + mScrollX + "  " + desireWidth + " getwidth " + getWidth());
         int maxX = desireWidth - getWidth();
         if (mScrollX > maxX) {
             // 超出了右边界，弹回
@@ -202,27 +250,12 @@ public class ScrollMenuView extends ViewGroup{
 
     @Override
     protected void onDraw(Canvas canvas) {
-        Log.e("moveBy", "onDraw: ");
         super.onDraw(canvas);
     }
 
-    private void initStartPoint(MotionEvent event) {
-        final int pointerIndex = MotionEventCompat.getActionIndex(event);
-        final float x = MotionEventCompat.getX(event, pointerIndex);
-        final float y = MotionEventCompat.getY(event, pointerIndex);
-
-        // Remember where we started (for dragging)
-        startX = x;
-        startY = y;
-        // Save the ID of this pointer (for dragging)
-        mActivePointerId = MotionEventCompat.getPointerId(event, 0);
-    }
 
     public void moveBy(int deltaX, int deltaY) {
-        Log.e("moveBy", "deltaX: " + deltaX + "    deltaY: " + deltaY);
-//        if (Math.abs(deltaX) >= Math.abs(deltaY)) {
-            scrollBy(deltaX, 0);
-//        }
+        scrollBy(deltaX, 0);
     }
 
     @Override
