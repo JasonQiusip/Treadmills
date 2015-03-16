@@ -337,7 +337,7 @@ public class ScrollMenuView extends ViewGroup{
     }
 
     private float getScaleFactor(int childCenter){
-        return (float)(1 + (1.2-1));
+        return 1f;
     }
 
     private float getRelativePosition(int pixexPos){
