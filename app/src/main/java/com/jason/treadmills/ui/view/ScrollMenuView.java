@@ -2,7 +2,9 @@ package com.jason.treadmills.ui.view;
 
 
 import android.content.Context;
+import android.graphics.Camera;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
@@ -15,6 +17,9 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.HorizontalScrollView;
 import android.widget.OverScroller;
 
 import com.jason.treadmills.utils.Logger;
@@ -51,6 +56,9 @@ public class ScrollMenuView extends ViewGroup{
     private float mLastFocusY;
     private float focusX;
     private float focusY;
+    private long ANIMATED_SCROLL_GAP = 200;
+    private long mLastScroll;
+    private Camera mCamera;
 
 
     public ScrollMenuView(Context context) {
@@ -64,7 +72,7 @@ public class ScrollMenuView extends ViewGroup{
     }
 
     private void initParams(Context context) {
-        mScroller = new OverScroller(context);
+        mScroller = new OverScroller(context, new DecelerateInterpolator());
         vc = ViewConfiguration.get(context);
         mTouchSlop = vc.getScaledTouchSlop();
         mMinFlingVelocity = vc.getScaledMinimumFlingVelocity();
@@ -75,6 +83,7 @@ public class ScrollMenuView extends ViewGroup{
         mEdgeEffectRight = new EdgeEffectCompat(context);
         mEdgeEffectBottom = new EdgeEffectCompat(context);
         mTouchSlopSquare = mTouchSlop * mTouchSlop;
+        mCamera = new Camera();
     }
 
     @Override
@@ -130,6 +139,8 @@ public class ScrollMenuView extends ViewGroup{
         }
     }
 
+
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
         final int action = MotionEventCompat.getActionMasked(event);
@@ -178,18 +189,20 @@ public class ScrollMenuView extends ViewGroup{
 
         switch(action) {
             case MotionEvent.ACTION_DOWN:
+                if (!mScroller.isFinished()) {
+                    mScroller.abortAnimation();
+                }
+                rotate();
                 startX = mLastFocusX = focusX;
                 startY = mLastFocusY = focusY;
                 break;
             case MotionEvent.ACTION_MOVE:
-                final int deltaX = (int) (focusX - mLastFocusX);
-                final int deltaY = (int) (focusY - mLastFocusY);
-                int distance = (deltaX * deltaX) + (deltaY * deltaY);
-                if (distance > mTouchSlopSquare) {
-                    mLastFocusX = focusX;
-                    mLastFocusY = focusY;
-                    moveBy(-deltaX, 0);
-                }
+                int deltaX = (int) (focusX - mLastFocusX);
+                int deltaY = (int) (focusY - mLastFocusY);
+
+                moveBy(-deltaX, 0);
+                mLastFocusX = focusX;
+                mLastFocusY = focusY;
                 break;
             case MotionEvent.ACTION_UP:
                 velocityTracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
@@ -198,11 +211,25 @@ public class ScrollMenuView extends ViewGroup{
                 fling(-velocityX, -velocityY);
 
                 break;
+            case MotionEvent.ACTION_CANCEL:
+                velocityTracker.recycle();
+                break;
         }
 
         return true;
     }
 
+    Matrix matrix=new Matrix();
+    void rotate()
+    {
+        mCamera.save();
+        mCamera.rotateY(30);
+        mCamera.getMatrix(matrix);
+        mCamera.restore();
+//        matrix.preTranslate(-100, -100);
+//        matrix.postTranslate(100, 100);
+
+    }
     private void calFocusXY(MotionEvent event, int action) {
         final boolean pointerUp =
                 (action & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_POINTER_UP;
@@ -246,6 +273,85 @@ public class ScrollMenuView extends ViewGroup{
             mScroller.fling(mScrollX, 0, (int) velocityX, 0, 0, maxX, 0, 0);
             ViewCompat.postInvalidateOnAnimation(this);
         }
+
+    }
+
+    @Override
+    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+        canvas.save();
+        setChildTransformation(child, matrix);
+        //initialize canvas state. Child 0,0 coordinates will match canvas 0,0
+        canvas.translate(child.getLeft(), child.getTop());
+        //set child transformation on canvas
+        canvas.concat(matrix);
+        return super.drawChild(canvas, child, drawingTime);
+    }
+
+    private void setChildTransformation(View child, Matrix m){
+        m.reset();
+
+//		addChildRotation(child, m);
+        addChildScale(child, m);
+//		addChildCircularPathZOffset(child, m);
+//        addChildAdjustPosition(child,m);
+
+        //set coordinate system origin to center of child
+        m.preTranslate(-child.getWidth()/2f, -child.getHeight()/2f);
+        //move back
+        m.postTranslate(child.getWidth()/2f, child.getHeight()/2f);
+
+    }
+
+    private void addChildScale(View v,Matrix m){
+        final float f = getScaleFactor(getChildsCenter(v));
+        m.postScale(f, f);
+    }
+
+    private int getChildsCenter(View v){
+        final int w = v.getRight() - v.getLeft();
+        return v.getLeft() + w/2;
+    }
+
+    private void addChildAdjustPosition(View child, Matrix m) {
+        final int c = getChildsCenter(child);
+        final float crp = getClampedRelativePosition(getRelativePosition(c), 12);
+        final float d = 10f * 0.1f * 0.5f * crp * getSpacingMultiplierOnCirlce(c);
+
+        m.postTranslate(d, 0f);
+    }
+
+    private float getSpacingMultiplierOnCirlce(int childCenter){
+        float x = getRelativePosition(childCenter)/2;
+        return (float) Math.sin(Math.acos(x));
+    }
+
+    private float getClampedRelativePosition(float position, float threshold){
+        if(position < 0){
+            if(position < -threshold) return -1f;
+            else return position/threshold;
+        }
+        else{
+            if(position > threshold) return 1;
+            else return position/threshold;
+        }
+    }
+
+    private float getScaleFactor(int childCenter){
+        return (float)(1 + (1.2-1));
+    }
+
+    private float getRelativePosition(int pixexPos){
+        final int half = getWidth()/2;
+        final int centerPos = getScrollX() + half;
+
+        return (pixexPos - centerPos)/((float) half);
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        Logger.showErrorLog("dispatchDraw", " canvas ");
+
+        super.dispatchDraw(canvas);
     }
 
     @Override
@@ -258,9 +364,40 @@ public class ScrollMenuView extends ViewGroup{
         scrollBy(deltaX, 0);
     }
 
+    /**
+     * Like {@link View#scrollBy}, but scroll smoothly instead of immediately.
+     *
+     * @param dx the number of pixels to scroll by on the X axis
+     * @param dy the number of pixels to scroll by on the Y axis
+     */
+    public final void smoothScrollBy(int dx, int dy) {
+        if (getChildCount() == 0) {
+            // Nothing to do.
+            return;
+        }
+        long duration = AnimationUtils.currentAnimationTimeMillis() - mLastScroll;
+        if (duration > ANIMATED_SCROLL_GAP) {
+            final int width = getWidth() - getPaddingLeft() - getPaddingRight();
+            final int right = getChildAt(0).getWidth();
+            final int maxX = Math.max(0, right - width);
+            final int scrollX = (int)mLastFocusX;
+            dx = Math.max(0, Math.min(scrollX + dx, maxX)) - scrollX;
+
+            mScroller.startScroll(scrollX, (int)mLastFocusY, dx, 0);
+            ViewCompat.postInvalidateOnAnimation(this);
+        } else {
+            if (!mScroller.isFinished()) {
+                mScroller.abortAnimation();
+            }
+            scrollBy(dx, dy);
+        }
+        mLastScroll = AnimationUtils.currentAnimationTimeMillis();
+    }
+
     @Override
     public void computeScroll() {
         super.computeScroll();
+//        Logger.showErrorLog("computeScroll  ","....................----------------");
         if (mScroller.computeScrollOffset()) {
             scrollTo(mScroller.getCurrX(), 0);
             ViewCompat.postInvalidateOnAnimation(this);

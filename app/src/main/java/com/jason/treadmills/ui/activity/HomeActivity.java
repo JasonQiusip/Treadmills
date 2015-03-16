@@ -1,5 +1,6 @@
 package com.jason.treadmills.ui.activity;
 
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -16,9 +17,9 @@ import butterknife.OnClick;
 
 public class HomeActivity extends ActionBarActivity {
 
-    @InjectView(R.id.button) ImageButton btn1;
-    @InjectView(R.id.button2) ImageButton btn2;
-    @InjectView(R.id.button3) ImageButton btn3;
+    @InjectView(R.id.btnHomeAty1) ImageButton btn1;
+    @InjectView(R.id.btnHomeAty2) ImageButton btn2;
+    @InjectView(R.id.btnHomeAty3) ImageButton btn3;
 
 
     @Override
@@ -28,8 +29,9 @@ public class HomeActivity extends ActionBarActivity {
         ButterKnife.inject(this);
     }
 
-    @OnClick(R.id.button) void showToast(){
+    @OnClick(R.id.btnHomeAty1) void showToast(){
         Toast.makeText(this, "showToast ", Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(this, TCoverFlowActivity.class));
     }
 
     @Override
