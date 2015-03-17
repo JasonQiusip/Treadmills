@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.OverScroller;
 
 import com.jason.treadmills.utils.Logger;
@@ -278,12 +279,16 @@ public class ScrollMenuView extends ViewGroup{
 
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
-        canvas.save();
-        setChildTransformation(child, matrix);
+
+//        Logger.showErrorLog("drawChild", getScrollX()+" "+ ((ImageButton)child).getDrawable() + " " + child.getLeft() + "  "+getWidth()+" "+child.getWidth());
+
+
+//        canvas.save();
+//        setChildTransformation(child, matrix);
         //initialize canvas state. Child 0,0 coordinates will match canvas 0,0
-        canvas.translate(child.getLeft(), child.getTop());
+//        canvas.translate(child.getLeft(), child.getTop());
         //set child transformation on canvas
-        canvas.concat(matrix);
+//        canvas.concat(matrix);
         return super.drawChild(canvas, child, drawingTime);
     }
 
@@ -291,29 +296,31 @@ public class ScrollMenuView extends ViewGroup{
         m.reset();
 
 //		addChildRotation(child, m);
-        addChildScale(child, m);
+        final float scaleRate = addChildScale(child, m);
 //		addChildCircularPathZOffset(child, m);
-//        addChildAdjustPosition(child,m);
+        addChildAdjustPosition(child,m);
 
         //set coordinate system origin to center of child
-        m.preTranslate(-child.getWidth()/2f, -child.getHeight()/2f);
+//        m.postTranslate(-child.getWidth()/2, 0);
         //move back
-        m.postTranslate(child.getWidth()/2f, child.getHeight()/2f);
+
+//        Log.e("", "" + m.toString() + " " +(1 - scaleRate));
 
     }
 
-    private void addChildScale(View v,Matrix m){
-        final float f = getScaleFactor(getChildsCenter(v));
+    private float addChildScale(View v,Matrix m){
+        final float f = getScaleFactor(getChildCenter(v));
         m.postScale(f, f);
+        return f;
     }
 
-    private int getChildsCenter(View v){
+    private int getChildCenter(View v){
         final int w = v.getRight() - v.getLeft();
         return v.getLeft() + w/2;
     }
 
     private void addChildAdjustPosition(View child, Matrix m) {
-        final int c = getChildsCenter(child);
+        final int c = getChildCenter(child);
         final float crp = getClampedRelativePosition(getRelativePosition(c), 12);
         final float d = 10f * 0.1f * 0.5f * crp * getSpacingMultiplierOnCirlce(c);
 
@@ -337,7 +344,11 @@ public class ScrollMenuView extends ViewGroup{
     }
 
     private float getScaleFactor(int childCenter){
-        return 1f;
+        float relativePosition = getRelativePosition(childCenter);
+
+//        final float clampedRelativePosition = getClampedRelativePosition(relativePosition, 0.3f * 1280f / getWidth());
+        Logger.showErrorLog("relativePostion", relativePosition +" ");
+        return 1f + 0.2f * (1 - Math.abs(relativePosition));
     }
 
     private float getRelativePosition(int pixexPos){
@@ -349,8 +360,7 @@ public class ScrollMenuView extends ViewGroup{
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
-        Logger.showErrorLog("dispatchDraw", " canvas ");
-
+        Logger.showErrorLog("canvas", "dispatchDraw ");
         super.dispatchDraw(canvas);
     }
 

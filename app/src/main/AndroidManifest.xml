@@ -19,8 +19,13 @@
         </activity>
         <activity
             android:name=".ui.activity.TCoverFlowActivity"
-            android:screenOrientation="landscape"
-            android:label="@string/title_activity_tcover_flow" >
+            android:label="@string/title_activity_tcover_flow"
+            android:screenOrientation="landscape" >
+        </activity>
+        <activity
+            android:name=".ui.activity.TCarouselActivity"
+            android:label="@string/title_activity_tcarousel"
+            android:screenOrientation="landscape" >
         </activity>
     </application>
 

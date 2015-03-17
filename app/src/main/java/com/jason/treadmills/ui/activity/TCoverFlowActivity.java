@@ -15,7 +15,7 @@ import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
 import com.jason.treadmills.R;
-import com.jason.treadmills.TestView.FeatureCoverFlow;
+import com.jason.treadmills.ui.viewcoverflow.FeatureCoverFlow;
 import com.jason.treadmills.model.GameEntity;
 import com.jason.treadmills.ui.adapter.CoverFlowAdapter;
 

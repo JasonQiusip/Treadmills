@@ -8,4 +8,11 @@
     <string name="title2">Assassin\'s Creed III</string>
     <string name="title3">Hitman Absolution</string>
     <string name="title4">Dishonored</string>
+    <string name="title_activity_tcarousel">TCarouselActivity</string>
+    <array name="entries">
+        <item>@drawable/image_1</item>
+        <item>@drawable/image_2</item>
+        <item>@drawable/image_3</item>
+        <item>@drawable/image_4</item>
+    </array>
 </resources>
