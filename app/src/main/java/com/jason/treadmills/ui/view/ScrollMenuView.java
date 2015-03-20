@@ -206,6 +206,7 @@ public class ScrollMenuView extends ViewGroup{
                 mLastFocusY = focusY;
                 break;
             case MotionEvent.ACTION_UP:
+                Logger.showErrorLog("ACTION_UP  ","  velocityTracker  ");
                 velocityTracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
                 final float velocityY = velocityTracker.getYVelocity(mActivePointerId);
                 final float velocityX = velocityTracker.getXVelocity(mActivePointerId);
@@ -260,7 +261,8 @@ public class ScrollMenuView extends ViewGroup{
     private void fling(float velocityX, float velocityY) {
         mScroller.forceFinished(true);
         int mScrollX = getScrollX();
-        Logger.showErrorLog("fling  ", "" + mScrollX + "  " + desireWidth + " getwidth " + getWidth());
+        int mScrollY = getScrollY();
+//        Logger.showErrorLog("fling  ", "" + mScrollX + "  " + desireWidth + " getwidth " + getWidth());
         int maxX = desireWidth - getWidth();
         if (mScrollX > maxX) {
             // 超出了右边界，弹回
@@ -270,8 +272,8 @@ public class ScrollMenuView extends ViewGroup{
             // 超出了左边界，弹回
             mScroller.startScroll(mScrollX, 0, -mScrollX, 0);
             ViewCompat.postInvalidateOnAnimation(this);
-        } else if (Math.abs(velocityX) >= mMinFlingVelocity && maxX > 0) {
-            mScroller.fling(mScrollX, 0, (int) velocityX, 0, 0, maxX, 0, 0);
+        } else if (Math.abs(velocityX) + Math.abs(velocityY) >= mMinFlingVelocity && maxX > 0) {
+            mScroller.fling(mScrollX, mScrollY, (int) velocityX, (int)velocityY, Integer.MIN_VALUE,Integer.MAX_VALUE, Integer.MIN_VALUE,Integer.MAX_VALUE);
             ViewCompat.postInvalidateOnAnimation(this);
         }
 

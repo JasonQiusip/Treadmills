@@ -175,7 +175,7 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 	private float mTargetLeft;
 	private float mTargetTop;
 	
-	//reflection
+	//reflection 倒影相关
 	private final Matrix mReflectionMatrix = new Matrix();
 	private final Paint mPaint = new Paint();
 	private final Paint mReflectionPaint = new Paint();
@@ -308,6 +308,7 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 			if(mReflectionCacheInvalid){
 				if((mTouchState != TOUCH_STATE_FLING && mTouchState != TOUCH_STATE_ALIGN) || mReflectionCache == null){
 					try{
+                        // 获得倒影的图片
 						mReflectionCache = createReflectionBitmap(b);
 						mReflectionCacheInvalid = false;
 					}
@@ -336,7 +337,6 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 		return ((float)mTuningWidgetSize)/((float)getWidth());
 	}
 
-	@SuppressLint("NewApi")
 	@Override
 	protected View addAndMeasureChildHorizontal(View child, int layoutMode) {
 		final int index = layoutMode == LAYOUT_MODE_TO_BEFORE ? 0 : -1;
@@ -344,6 +344,8 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 		
 		if(child!=null && child instanceof CoverFrame){
 			addViewInLayout(child, index, lp, true);
+
+            //ask child to measure itself
             measureChild(child);
 	        return child;
 		}
@@ -369,6 +371,7 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 
 	@Override
 	protected int layoutChildHorizontal(View v, int left, LoopLayoutParams lp) {
+        super.layoutChildHorizontal(v, left, lp);
 		int l,t,r,b;
 		
 		l = left; 
@@ -421,6 +424,7 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 			mCenterItemOffset = d;
             //保存当前的中间子View的index
 			mLastCenterItemIndex = i;
+            //返回顺序为最后的index
 			return childCount-1;
 		}
 		
@@ -467,10 +471,14 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 
 		
 		super.dispatchDraw(canvas);
-		
-		if(mScrollToPositionOnNextInvalidate != -1 && mAdapter != null && mAdapter.getCount() > 0){			
+        Log.e("  dispatchingDraw ",mFirstItemPosition+" " +mLastCenterItemIndex);
+		if(mScrollToPositionOnNextInvalidate != -1 && mAdapter != null && mAdapter.getCount() > 0){
+
 			final int lastCenterItemPosition = (mFirstItemPosition + mLastCenterItemIndex) % mAdapter.getCount();
+            Log.e(lastCenterItemPosition+"  lastCenterItemPosition ",mFirstItemPosition+" " +mLastCenterItemIndex);
 			final int di = lastCenterItemPosition - mScrollToPositionOnNextInvalidate;
+            Log.e(di+"  di",mScrollToPositionOnNextInvalidate+" ");
+
 			mScrollToPositionOnNextInvalidate = -1;
 			if(di != 0){
 				final int dst = (int) (di * mCoverWidth * mSpacing) - mCenterItemOffset;
@@ -484,6 +492,7 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
         if(mTouchState == TOUCH_STATE_RESTING){
 
             final int lastCenterItemPosition = (mFirstItemPosition + mLastCenterItemIndex) % mAdapter.getCount();
+            Log.e("  TOUCH_STATE_RESTING ",lastCenterItemPosition+"   "+mFirstItemPosition+" " +mLastCenterItemIndex);
             if (mLastTouchState != TOUCH_STATE_RESTING || mlastCenterItemPosition != lastCenterItemPosition){
                 mLastTouchState = TOUCH_STATE_RESTING;
                 mlastCenterItemPosition = lastCenterItemPosition;
@@ -492,10 +501,12 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
         }
 
         if (mTouchState == TOUCH_STATE_SCROLLING && mLastTouchState != TOUCH_STATE_SCROLLING){
+            Log.e("  TOUCH_STSCROLLING ",mFirstItemPosition+" " +mLastCenterItemIndex);
             mLastTouchState = TOUCH_STATE_SCROLLING;
             if(mOnScrollPositionListener != null) mOnScrollPositionListener.onScrolling();
         }
         if (mTouchState == TOUCH_STATE_FLING && mLastTouchState != TOUCH_STATE_FLING){
+            Log.e("  TOUCH_STATE_FLING ",mFirstItemPosition+" " +mLastCenterItemIndex);
             mLastTouchState = TOUCH_STATE_FLING;
             if(mOnScrollPositionListener != null) mOnScrollPositionListener.onScrolling();
         }
@@ -503,10 +514,12 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 
 		//make sure we never stay unaligned after last draw in resting state
 		if(mTouchState == TOUCH_STATE_RESTING && mCenterItemOffset != 0){
+            Log.e("  TOUCH_STATE_RESTING2",mFirstItemPosition+" " +mLastCenterItemIndex);
 			scrollBy(mCenterItemOffset, 0);
 			postInvalidate();
 		}
-		
+
+        Log.e("getChildAt ",""+mLastCenterItemIndex);
 		try {
 			View v = getChildAt(mLastCenterItemIndex);
 			if(v != null) v.requestFocus(FOCUS_FORWARD);
@@ -517,21 +530,21 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 	}
 		
 	
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_DPAD_LEFT:
-			scroll((int) (-1 * mCoverWidth * mSpacing) - mCenterItemOffset);
-			return true;
-		case KeyEvent.KEYCODE_DPAD_RIGHT:
-			scroll((int) (mCoverWidth * mSpacing) - mCenterItemOffset);
-			return true;
-		default:
-			break;
-		}
-		return super.onKeyDown(keyCode, event);
-	}
+//	@Override
+//	public boolean onKeyDown(int keyCode, KeyEvent event) {
+//
+//		switch (keyCode) {
+//		case KeyEvent.KEYCODE_DPAD_LEFT:
+//			scroll((int) (-1 * mCoverWidth * mSpacing) - mCenterItemOffset);
+//			return true;
+//		case KeyEvent.KEYCODE_DPAD_RIGHT:
+//			scroll((int) (mCoverWidth * mSpacing) - mCenterItemOffset);
+//			return true;
+//		default:
+//			break;
+//		}
+//		return super.onKeyDown(keyCode, event);
+//	}
 	
 	@Override
 	protected void fillFirstTime(final int lastItemPos,final int firstItemPos){
@@ -552,29 +565,30 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 		mLeftChildEdge = (int) (-mCoverWidth * mSpacing);
 		right = 0;
 		left = mLeftChildEdge;
-		
+		Logger.showErrorLog("rightScreenEdge  ",""+rightScreenEdge+"  width " + getWidth());
 		while(right < rightScreenEdge){
 			mLastItemPosition++;
 			
 			if(isRepeatingNow && mLastItemPosition >= firstItemPos) return;
-			
+
+            //如果最后的一个View的Index大于总的数量
 			if(mLastItemPosition >= mAdapter.getCount()){
-				if(firstItemPos == 0 && shouldRepeat) mLastItemPosition = 0;
-				else{						
-					if(firstItemPos > 0){
-						mLastItemPosition = 0;
-						isRepeatingNow = true;
-					}
-					else if(!shouldRepeat){					
-						mLastItemPosition--;
-						isSrollingDisabled = true;
-						final int w = right-mLeftChildEdge;
-						final int dx = (getWidth() - w)/2;
-						scrollTo(-dx, 0);
-						return;
-					}
+//				if(firstItemPos == 0 && shouldRepeat) mLastItemPosition = 0;
+//				else{
+//					if(firstItemPos > 0){
+//						mLastItemPosition = 0;
+//						isRepeatingNow = true;
+//					}
+//					else if(!shouldRepeat){
+//						mLastItemPosition--;
+//						isSrollingDisabled = true;
+//						final int w = right-mLeftChildEdge;
+//						final int dx = (getWidth() - w)/2;
+//						scrollTo(-dx, 0);
+//						return;
+//					}
 					
-				}
+//				}
 			}
 			
 			if(mLastItemPosition >= mAdapter.getCount() ){
@@ -616,9 +630,14 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 		
 		View child = getChildAt(getChildCount() - 1);
 		int currLayoutLeft = child.getLeft() + (int)(child.getWidth() * mSpacing);
+
+        //如果当前的孩子View的不在最右边
 		while(currLayoutLeft < rightScreenEdge){
+            if(mLastItemPosition >= mAdapter.getCount())
+                break;
 			mLastItemPosition++;
-			if(mLastItemPosition >= mAdapter.getCount()) mLastItemPosition = 0;
+
+//                mLastItemPosition = 0;
 			
 			child = getViewAtPosition(mLastItemPosition);
 			child = addAndMeasureChildHorizontal(child, LAYOUT_MODE_AFTER);
@@ -673,10 +692,10 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 		
 		View child = getChildAt(0); 
 		int currLayoutRight = child.getRight() - (int)(child.getWidth() * mSpacing);
-		while(currLayoutRight > leftScreenEdge){
-			mFirstItemPosition--;
-			if(mFirstItemPosition < 0) mFirstItemPosition = mAdapter.getCount()-1;
-			
+        while(currLayoutRight > leftScreenEdge){
+            mFirstItemPosition--;
+            if(mFirstItemPosition < 0) mFirstItemPosition = mAdapter.getCount()-1;
+
 			child = getViewAtPosition(mFirstItemPosition);
 			if(child == getChildAt(getChildCount() - 1)){
 				removeViewInLayout(child);
@@ -1148,6 +1167,7 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 
         // if have a target, see if we're allowed to and want to intercept its
         // events
+        //是否需要将触摸事件分发到孩子view
         if (onInterceptTouchEvent(ev)) {
             final float xc = xf - mTargetLeft;
             final float yc = yf - mTargetTop;
@@ -1404,7 +1424,7 @@ public class FeatureCoverFlow extends EndlessLoopAdapterContainer implements Vie
 
 	/**
 	 * Set this to some color if you don't want see through reflections other reflections. Preferably set to same color as background color
-	 * @param reflectionBackgroundColor the Reflection Background Color to set
+//	 * @param reflectionBackgroundColor the Reflection Background Color to set
 	 */
 //	public void setReflectionBackgroundColor(int reflectionBackgroundColor) {
 //		this.mReflectionBackgroundColor = reflectionBackgroundColor;

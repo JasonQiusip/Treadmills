@@ -55,7 +55,6 @@ public class TCoverFlowActivity extends ActionBarActivity {
         Animation out = AnimationUtils.loadAnimation(this, R.anim.slide_out_bottom);
         mTitle.setInAnimation(in);
         mTitle.setOutAnimation(out);
-        mCoverFlow.setSpacing(0.7f);
         mAdapter = new CoverFlowAdapter(this);
         mAdapter.setData(mData);
 

@@ -82,7 +82,7 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
     protected boolean isSrollingDisabled = false;
     
     /** Whether content should be repeated when there is not enough items to fill container */
-    protected boolean shouldRepeat = true;
+    protected boolean shouldRepeat = false;
     
     /** Position to scroll adapter only if is in endless mode. This is done after layout if we find out we are endless, we must relayout*/
     protected int mScrollPositionIfEndless = -1;
@@ -398,10 +398,10 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 			return;
 		}
 		
-//		relayout();
-//		removeNonVisibleViews();
-//		refillRight();
-//		refillLeft();
+		relayout();
+		removeNonVisibleViews();
+		refillRight();
+		refillLeft();
 
 	}
 
@@ -487,10 +487,10 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 //	protected void measureChild(View child, LoopLayoutParams params){
 //		//prepare spec for measurement
 //        final int specW, specH;
-//        
+//
 //        specW = getChildMeasureSpec(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.UNSPECIFIED), 0, params.width);
 //        specH = getChildMeasureSpec(MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.UNSPECIFIED), 0, params.height);
-//        
+//
 //////        final boolean useMeasuredW, useMeasuredH;
 ////        if(params.height >= 0){
 ////        	specH = MeasureSpec.EXACTLY | params.height;
@@ -506,7 +506,7 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 //////            	useMeasuredH = true;
 ////        	}
 ////        }
-////        
+////
 ////        if(params.width >= 0){
 ////        	specW = MeasureSpec.EXACTLY | params.width;
 //////        	useMeasuredW = false;
@@ -521,14 +521,14 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 //////            	useMeasuredW = true;
 ////        	}
 ////        }
-//        
+//
 //        //measure
 //        child.measure(specW, specH);
 //        //put measured values into layout params from where they will be used in layout.
 //        //Use measured values only if exact values was not specified in layout params.
 ////        if(useMeasuredH) params.actualHeight = child.getMeasuredHeight();
 ////        else params.actualHeight = params.height;
-////        
+////
 ////        if(useMeasuredW) params.actualWidth = child.getMeasuredWidth();
 ////        else params.actualWidth = params.width;
 //	}
@@ -686,27 +686,27 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 			}
 		}
 	}
-	
+//
 //	/**
 //	 * Checks and refills empty area on the left
 //	 */
 //	protected void refillLeft(){
 //		if(!shouldRepeat && isSrollingDisabled) return; //prevent next layout calls to override override first init to scrolling disabled by falling to this branch
 //		final int leftScreenEdge = getScrollX();
-//		
-//		View child = getChildAt(0); 
+//
+//		View child = getChildAt(0);
 //		int currLayoutRight = child.getRight();
 //		while(currLayoutRight > leftScreenEdge){
 //			mFirstItemPosition--;
 //			if(mFirstItemPosition < 0) mFirstItemPosition = mAdapter.getCount()-1;
-//			
+//
 //			child = mAdapter.getView(mFirstItemPosition, getCachedView(mFirstItemPosition), this);
 //			child = addAndMeasureChildHorizontal(child, LAYOUT_MODE_TO_BEFORE);
 //			currLayoutRight = layoutChildHorizontalToBefore(child, currLayoutRight, (LoopLayoutParams) child.getLayoutParams());
 //
 //			//update left edge of children in container
 //			mLeftChildEdge = child.getLeft();
-//			
+//
 //			//if selected view is going to screen, set selected state on him
 //			if(mFirstItemPosition == mSelectedPosition){
 //				child.setSelected(true);
@@ -1152,10 +1152,10 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
         	//events will propagate back here and on intercept touch event wont be called again
         	//instead we get cancel here, since we stated we shouldn't intercept events and propagate them to children
         	//but events propagated back here, because no child was interested
-//        	if(!mInterceptTouchEvents && mHandleSelectionOnActionUp && mTouchState == TOUCH_STATE_RESTING){
-//        		handleClick(mDown);
-//        		mHandleSelectionOnActionUp = false;
-//        	}        	
+        	if(!mInterceptTouchEvents && mHandleSelectionOnActionUp && mTouchState == TOUCH_STATE_RESTING){
+        		handleClick(mDown);
+        		mHandleSelectionOnActionUp = false;
+        	}
         	
             mAllowLongPress = false;
             
