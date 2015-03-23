@@ -38,11 +38,12 @@ public class TCoverFlowActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tcover_flow);
         ButterKnife.inject(this);
-        mData.add(new GameEntity(R.drawable.image_1, R.string.title1));
-        mData.add(new GameEntity(R.drawable.image_2, R.string.title2));
-        mData.add(new GameEntity(R.drawable.image_3, R.string.title3));
-        mData.add(new GameEntity(R.drawable.image_4, R.string.title4));
-
+        mData.add(new GameEntity(R.drawable.it1, R.string.title1));
+        mData.add(new GameEntity(R.drawable.gp1, R.string.title2));
+        mData.add(new GameEntity(R.drawable.tw1, R.string.title3));
+        mData.add(new GameEntity(R.drawable.set1, R.string.title4));
+        mData.add(new GameEntity(R.drawable.ch1, R.string.title4));
+        mData.add(new GameEntity(R.drawable.saf1, R.string.title4));
         mTitle.setFactory(new ViewSwitcher.ViewFactory() {
             @Override
             public View makeView() {

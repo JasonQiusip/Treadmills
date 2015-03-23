@@ -103,13 +103,11 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 	private boolean mAllowLongPress;
 	private float mLastMotionX;
 	private float mLastMotionY;
-//	private long mDownTime;
-	
+
 	private final Point mDown = new Point();
 	private boolean mHandleSelectionOnActionUp = false;
 	private boolean mInterceptTouchEvents;
-//	private boolean mCancelInIntercept;
-		
+
 	protected OnItemClickListener mOnItemClickListener;
 	protected OnItemSelectedListener mOnItemSelectedListener;
 
@@ -168,12 +166,8 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 		public static final int TOP = 0;
 		public static final int CENTER = 1;
 		public static final int BOTTOM = 2;
-		public static final int LEFT = 3;
-		public static final int RIGHT = 4;
-		
+
 		public int position;
-//		public int actualWidth;
-//		public int actualHeight;
 
 		public LoopLayoutParams(int w, int h) {
 			super(w, h);
@@ -399,9 +393,6 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 		}
 		
 		relayout();
-		removeNonVisibleViews();
-		refillRight();
-		refillLeft();
 
 	}
 
@@ -464,15 +455,12 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 	    if(mAdapter.getCount() == 0){
 	    	return;
 	    }
-	    		
+
 		if(getChildCount() == 0){
 			fillFirstTime(lastItemPos, firstItemPos);
 		}
 		else{
 			relayout();
-			removeNonVisibleViews();
-			refillRight();
-			refillLeft();
 		}
 	}
 	
@@ -484,56 +472,7 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 		refillInternal(-1, 0);
 	}
 	
-//	protected void measureChild(View child, LoopLayoutParams params){
-//		//prepare spec for measurement
-//        final int specW, specH;
-//
-//        specW = getChildMeasureSpec(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.UNSPECIFIED), 0, params.width);
-//        specH = getChildMeasureSpec(MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.UNSPECIFIED), 0, params.height);
-//
-//////        final boolean useMeasuredW, useMeasuredH;
-////        if(params.height >= 0){
-////        	specH = MeasureSpec.EXACTLY | params.height;
-//////        	useMeasuredH = false;
-////        }
-////        else{
-////        	if(params.height == LayoutParams.MATCH_PARENT){
-////        		specH = MeasureSpec.EXACTLY | getHeight();
-////        		params.height = getHeight();
-//////            	useMeasuredH = false;
-////        	}else{
-////        		specH = MeasureSpec.AT_MOST | getHeight();
-//////            	useMeasuredH = true;
-////        	}
-////        }
-////
-////        if(params.width >= 0){
-////        	specW = MeasureSpec.EXACTLY | params.width;
-//////        	useMeasuredW = false;
-////        }
-////        else{
-////        	if(params.width == LayoutParams.MATCH_PARENT){
-////        		specW = MeasureSpec.EXACTLY | getWidth();
-////        		params.width = getWidth();
-//////            	useMeasuredW = false;
-////        	}else{
-////        		specW = MeasureSpec.UNSPECIFIED;
-//////            	useMeasuredW = true;
-////        	}
-////        }
-//
-//        //measure
-//        child.measure(specW, specH);
-//        //put measured values into layout params from where they will be used in layout.
-//        //Use measured values only if exact values was not specified in layout params.
-////        if(useMeasuredH) params.actualHeight = child.getMeasuredHeight();
-////        else params.actualHeight = params.height;
-////
-////        if(useMeasuredW) params.actualWidth = child.getMeasuredWidth();
-////        else params.actualWidth = params.width;
-//	}
-	
-	protected void measureChild(View child){		
+	protected void measureChild(View child){
 		final int pwms = MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY);
 		final int phms = MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY);
 		measureChild(child, pwms, phms);
@@ -559,35 +498,35 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 	protected void fillFirstTime(final int lastItemPos,final int firstItemPos){
 		final int leftScreenEdge = 0;
 		final int rightScreenEdge = leftScreenEdge + getWidth();
-		
+
 		int right;
 		int left;
 		View child;
-		
+
 		boolean isRepeatingNow = false;
-		
+
 		//scrolling is enabled until we find out we don't have enough items
 	    isSrollingDisabled = false;
-		
+
 		mLastItemPosition = lastItemPos;
 		mFirstItemPosition = firstItemPos;
 		mLeftChildEdge = 0;
 		right = mLeftChildEdge;
 		left = mLeftChildEdge;
-		
+
 		while(right < rightScreenEdge){
 			mLastItemPosition++;
-			
+
 			if(isRepeatingNow && mLastItemPosition >= firstItemPos) return;
-			
+
 			if(mLastItemPosition >= mAdapter.getCount()){
 				if(firstItemPos == 0 && shouldRepeat) mLastItemPosition = 0;
-				else{						
+				else{
 					if(firstItemPos > 0){
 						mLastItemPosition = 0;
 						isRepeatingNow = true;
 					}
-					else if(!shouldRepeat){					
+					else if(!shouldRepeat){
 						mLastItemPosition--;
 						isSrollingDisabled = true;
 						final int w = right-mLeftChildEdge;
@@ -595,192 +534,37 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 						scrollTo(-dx, 0);
 						return;
 					}
-					
+
 				}
 			}
-			
+
 			if(mLastItemPosition >= mAdapter.getCount() ){
 				Log.wtf("EndlessLoop", "mLastItemPosition > mAdapter.getCount()");
 				return;
 			}
-			
+
 			child = mAdapter.getView(mLastItemPosition, getCachedView(), this);
             Validate.notNull(child, "Your adapter has returned null from getView.");
             child = addAndMeasureChildHorizontal(child, LAYOUT_MODE_AFTER);
 			left = layoutChildHorizontal(child, left, (LoopLayoutParams) child.getLayoutParams());
 			right = child.getRight();
-			
+
 			//if selected view is going to screen, set selected state on him
 			if(mLastItemPosition == mSelectedPosition){
 				child.setSelected(true);
 			}
-			
+
 		}
-		
+
 		if(mScrollPositionIfEndless > 0){
 			final int p = mScrollPositionIfEndless;
 			mScrollPositionIfEndless = -1;
 			removeAllViewsInLayout();
 			refillOnChange(p);
 		}
-	}	
-	
-	
-	/**
-	 * Checks and refills empty area on the right
-	 */
-	protected void refillRight(){
-		if(!shouldRepeat && isSrollingDisabled) return; //prevent next layout calls to override override first init to scrolling disabled by falling to this branch
-		if(getChildCount() == 0) return;
-		
-		final int leftScreenEdge = getScrollX();
-		final int rightScreenEdge = leftScreenEdge + getWidth();
-		
-		View child = getChildAt(getChildCount() - 1);
-		int right = child.getRight();
-		int currLayoutLeft = right + ((LoopLayoutParams)child.getLayoutParams()).rightMargin;
-		while(right < rightScreenEdge){
-			mLastItemPosition++;
-			if(mLastItemPosition >= mAdapter.getCount()) mLastItemPosition = 0;
-			
-			child = mAdapter.getView(mLastItemPosition, getCachedView(), this);
-      Validate.notNull(child,"Your adapter has returned null from getView.");
-			child = addAndMeasureChildHorizontal(child, LAYOUT_MODE_AFTER);
-			currLayoutLeft = layoutChildHorizontal(child, currLayoutLeft, (LoopLayoutParams) child.getLayoutParams());
-			right = child.getRight();
-			
-			//if selected view is going to screen, set selected state on him
-			if(mLastItemPosition == mSelectedPosition){
-				child.setSelected(true);
-			}
-		}
 	}
 	
-	/**
-	 * Checks and refills empty area on the left
-	 */
-	protected void refillLeft(){
-		if(!shouldRepeat && isSrollingDisabled) return; //prevent next layout calls to override first init to scrolling disabled by falling to this branch
-		if(getChildCount() == 0) return;
-		
-		final int leftScreenEdge = getScrollX();
-		
-		View child = getChildAt(0);
-		int childLeft = child.getLeft();
-		int currLayoutRight = childLeft - ((LoopLayoutParams)child.getLayoutParams()).leftMargin;
-		while(currLayoutRight > leftScreenEdge){
-			mFirstItemPosition--;
-			if(mFirstItemPosition < 0) mFirstItemPosition = mAdapter.getCount()-1;
-			
-			child = mAdapter.getView(mFirstItemPosition, getCachedView(), this);
-      Validate.notNull(child,"Your adapter has returned null from getView.");
-			child = addAndMeasureChildHorizontal(child, LAYOUT_MODE_TO_BEFORE);
-			currLayoutRight = layoutChildHorizontalToBefore(child, currLayoutRight, (LoopLayoutParams) child.getLayoutParams());
-			childLeft = child.getLeft() - ((LoopLayoutParams)child.getLayoutParams()).leftMargin;
-			//update left edge of children in container
-			mLeftChildEdge = childLeft;
-			
-			//if selected view is going to screen, set selected state on him
-			if(mFirstItemPosition == mSelectedPosition){
-				child.setSelected(true);
-			}
-		}
-	}
-//
-//	/**
-//	 * Checks and refills empty area on the left
-//	 */
-//	protected void refillLeft(){
-//		if(!shouldRepeat && isSrollingDisabled) return; //prevent next layout calls to override override first init to scrolling disabled by falling to this branch
-//		final int leftScreenEdge = getScrollX();
-//
-//		View child = getChildAt(0);
-//		int currLayoutRight = child.getRight();
-//		while(currLayoutRight > leftScreenEdge){
-//			mFirstItemPosition--;
-//			if(mFirstItemPosition < 0) mFirstItemPosition = mAdapter.getCount()-1;
-//
-//			child = mAdapter.getView(mFirstItemPosition, getCachedView(mFirstItemPosition), this);
-//			child = addAndMeasureChildHorizontal(child, LAYOUT_MODE_TO_BEFORE);
-//			currLayoutRight = layoutChildHorizontalToBefore(child, currLayoutRight, (LoopLayoutParams) child.getLayoutParams());
-//
-//			//update left edge of children in container
-//			mLeftChildEdge = child.getLeft();
-//
-//			//if selected view is going to screen, set selected state on him
-//			if(mFirstItemPosition == mSelectedPosition){
-//				child.setSelected(true);
-//			}
-//		}
-//	}
 	
-	/**
-     * Removes view that are outside of the visible part of the list. Will not
-     * remove all views.
-     */
-    protected void removeNonVisibleViews() {
-    	if(getChildCount() == 0) return;
-    	
-    	final int leftScreenEdge = getScrollX();
-		final int rightScreenEdge = leftScreenEdge + getWidth();
-    	
-    	// check if we should remove any views in the left
-        View firstChild = getChildAt(0);
-        final int leftedge = firstChild.getLeft() - ((LoopLayoutParams)firstChild.getLayoutParams()).leftMargin;
-        if(leftedge  != mLeftChildEdge) throw new IllegalStateException("firstChild.getLeft() != mLeftChildEdge");
-        while (firstChild != null && firstChild.getRight() + ((LoopLayoutParams)firstChild.getLayoutParams()).rightMargin < leftScreenEdge) {
-        	//if selected view is going off screen, remove selected state
-        	firstChild.setSelected(false);
-        	
-            // remove view
-            removeViewInLayout(firstChild); 
-            
-            if(mViewObserver != null) mViewObserver.onViewRemovedFromParent(firstChild, mFirstItemPosition);
-            WeakReference<View> ref = new WeakReference<View>(firstChild);
-            mCachedItemViews.addLast(ref);            
-            
-            mFirstItemPosition++;
-            if(mFirstItemPosition >= mAdapter.getCount()) mFirstItemPosition = 0;
-
-            // update left item position
-            mLeftChildEdge = getChildAt(0).getLeft() - ((LoopLayoutParams)getChildAt(0).getLayoutParams()).leftMargin;
-
-            // Continue to check the next child only if we have more than
-            // one child left
-            if (getChildCount() > 1) {
-                firstChild = getChildAt(0);
-            } else {
-                firstChild = null;
-            }
-        }
-        
-        // check if we should remove any views in the right
-        View lastChild = getChildAt(getChildCount() - 1);
-        while (lastChild != null && firstChild!=null && lastChild.getLeft() - ((LoopLayoutParams)firstChild.getLayoutParams()).leftMargin > rightScreenEdge) {
-        	//if selected view is going off screen, remove selected state
-        	lastChild.setSelected(false);
-        	
-            // remove the right view
-            removeViewInLayout(lastChild);
-            
-            if(mViewObserver != null) mViewObserver.onViewRemovedFromParent(lastChild, mLastItemPosition);
-            WeakReference<View> ref = new WeakReference<View>(lastChild);
-            mCachedItemViews.addLast(ref);
-            
-            mLastItemPosition--;
-            if(mLastItemPosition < 0) mLastItemPosition = mAdapter.getCount()-1;
-
-            // Continue to check the next child only if we have more than
-            // one child left
-            if (getChildCount() > 1) {
-                lastChild = getChildAt(getChildCount() - 1);
-            } else {
-                lastChild = null;
-            }
-        }
-    }
-	
-
 	/**
      * Adds a view as a child view and takes care of measuring it
      * 
@@ -847,15 +631,7 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
         return r + lp.rightMargin;
 	}
 	
-	/**
-	 *  Layout children from right to left
-	 */
-	protected int layoutChildHorizontalToBefore(View v,int right , LoopLayoutParams lp){
-		final int left = right - v.getMeasuredWidth() - lp.leftMargin - lp.rightMargin;
-		layoutChildHorizontal(v, left, lp);
-		return left;
-	}
-	
+
 	/**
 	 * Allows to make scroll alignments
 	 * @return true if invalidate() was issued, and container is going to scroll
@@ -979,23 +755,10 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
             	clearChildrenCache();
                 break;
         }
-
         mInterceptTouchEvents = mTouchState == TOUCH_STATE_SCROLLING;
         return mInterceptTouchEvents;
         
     }
-	
-//	/**
-//	 * Allow subclasses to override this to always intercept events
-//	 * @return
-//	 */
-//	protected boolean interceptEvents(){
-//		/*
-//         * The only time we want to intercept motion events is if we are in the
-//         * drag mode.
-//         */
-//        return mTouchState == TOUCH_STATE_SCROLLING;
-//	}
 	
 	protected void handleClick(Point p){
 		final int c = getChildCount();
@@ -1138,7 +901,7 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
         	}
         	
             // Release the drag
-            clearChildrenCache();
+//            clearChildrenCache();
             mTouchState = TOUCH_STATE_RESTING;
             mAllowLongPress = false;
             
@@ -1173,49 +936,6 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
 
         return true;
 	}
-		
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_DPAD_LEFT:
-			checkScrollFocusLeft();
-			break;
-		case KeyEvent.KEYCODE_DPAD_RIGHT:
-			checkScrollFocusRight();
-			break;
-		default:
-			break;
-		}
-		
-		return super.onKeyDown(keyCode, event);
-	}
-	
-	/**
-	 * Moves with scroll window if focus hits one view before end of screen
-	 */
-	private void checkScrollFocusLeft(){
-		final View focused = getFocusedChild();
-		if(getChildCount() >= 2 ){
-			View second = getChildAt(1);
-			View first = getChildAt(0);
-			
-			if(focused == second){
-				scroll(-first.getWidth());
-			}
-		}			
-	}
-	
-	private void checkScrollFocusRight(){
-		final View focused = getFocusedChild();
-		if(getChildCount() >= 2 ){
-			View last = getChildAt(getChildCount()-1);
-			View lastButOne = getChildAt(getChildCount()-2);
-			
-			if(focused == lastButOne){
-				scroll(last.getWidth());
-			}
-		}
-	}
 
 	/**
 	 * Check if list of weak references has any view still in memory to offer for recyclation
@@ -1232,7 +952,7 @@ public class EndlessLoopAdapterContainer extends AdapterView<Adapter> {
         }
         return null;
 	}
-	
+
 	protected void enableChildrenCache() {
         setChildrenDrawnWithCacheEnabled(true);
         setChildrenDrawingCacheEnabled(true);     
